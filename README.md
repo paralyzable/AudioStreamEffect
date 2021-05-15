@@ -1,5 +1,5 @@
 # AudioStreamEffect
-Apply audio effects in real time for easy comparison.
+Apply audio effects in real time for easy comparison.  
 Effects include  
     Change speed - nearest neighbor interpolation  
     Change speed - linear interpolation  
