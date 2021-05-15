@@ -29,7 +29,7 @@ Window::Window(UpdateProc proc, void* user)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	glfwWindowHint(GLFW_MAXIMIZED, 0);
-	m_Window = glfwCreateWindow(600, 450, "Audio Resampler", NULL, NULL);
+	m_Window = glfwCreateWindow(600, 450, "Audio Stream Effect", NULL, NULL);
 	glfwMakeContextCurrent(m_Window);
 	glfwSwapInterval(1);
 
