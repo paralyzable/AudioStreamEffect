@@ -1,5 +1,7 @@
 #pragma once
 #include "StreamTransform.h"
+#include "WindowFunction.h"
+#include <memory>
 
 class SpeedStreamTransform :public StreamTransform
 {
@@ -58,6 +60,7 @@ class WindowedSincSST :public SpeedStreamTransform
 {
 private:
 	unsigned int m_KernelSize = 50;
+	std::unique_ptr<WindowFunction> m_Window = std::make_unique<RectangleWindow>();
 
 public:
 	WindowedSincSST() = default;

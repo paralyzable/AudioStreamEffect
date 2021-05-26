@@ -1,14 +1,18 @@
 #pragma once
 #include "StreamTransform.h"
+#include "WindowFunction.h"
 
 class FilterStreamTransform :public StreamTransform
 {
 protected:
 	unsigned int m_KernelSize = 100;
+	std::unique_ptr<WindowFunction> m_Window = std::make_unique<RectangleWindow>();
 
 public:
 	FilterStreamTransform() = default;
 	virtual ~FilterStreamTransform() = default;
+
+	FilterStreamTransform(const FilterStreamTransform& other);
 
 	void EndTransform(Track& track, size_t offset, size_t count) override;
 

@@ -4,6 +4,11 @@
 #include <math.h>
 #include <cmath>
 
+FilterStreamTransform::FilterStreamTransform(const FilterStreamTransform& other)
+	:m_Window(CreateWindowFromID(other.m_Window->ID()))
+{
+}
+
 void FilterStreamTransform::EndTransform(Track& track, size_t offset, size_t count)
 {
 	track.AdvancePosition((double)count);
@@ -16,9 +21,20 @@ std::string FilterStreamTransform::IGetTransformName() const
 
 void FilterStreamTransform::ITransformDraw()
 {
-	unsigned int min = 0, max = 500;
-	ImGui::SliderScalar("Kernel size", ImGuiDataType_U32, &m_KernelSize, &min, &max);
-	m_KernelSize += m_KernelSize % 2 == 1;
+	float size = m_KernelSize;
+	if (ImGui::SliderFloat("Kernel size", &size, 1, 2001, "%.0f", 2.0f))
+		m_KernelSize = (int)std::round(size);
+	m_KernelSize += m_KernelSize % 2 == 0;
+
+	int current = m_Window->ID();
+	if (ImGui::Combo("Window", &current, windows_list, std::size(windows_list)))
+	{
+		m_Window = CreateWindowFromID(current);
+		if (current == 5)//DolpCheby is expensive
+			m_KernelSize = 15;
+	}
+	m_Window->Draw();
+
 	IFilterDraw();
 }
 
@@ -35,16 +51,17 @@ SampleView LowPassFST::Transform(Track& track, size_t offset, size_t count, unsi
 	m_Result[channel].resize(count);
 	for (size_t i = 0; i < count; i++)
 	{
-		int start = (int)std::round(position - m_KernelSize / 2);
-		int end = (int)std::round(position + m_KernelSize / 2);
+		int start = (int)std::round(position - m_KernelSize / 2.0);
+		int end = (int)std::round(position + m_KernelSize / 2.0);
 		float result(0.0);
 		for (int j = start; j < end; j++)
 		{
-			float x = (float)(M_PI * (j - position));
-			float blackman_window = (0.42f + 0.5f * cos(2.0f * x / m_KernelSize) + 0.08f * cos(4.0f * x / m_KernelSize));
+			float x = (float)(j - position);
+			float window = (*m_Window)(x, m_KernelSize);
+			x *= M_PI;
 			float zero = x == 0;
 			float sinc = sin((float)m_CutoffFraction * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction;
-			result += view[(size_t)j] * sinc * blackman_window;
+			result += view[(size_t)j] * sinc * window;
 		}
 		m_Result[channel][i] = result;
 		position += 1.0;
@@ -76,18 +93,20 @@ SampleView HighPassFST::Transform(Track& track, size_t offset, size_t count, uns
 	m_Result[channel].resize(count);
 	for (size_t i = 0; i < count; i++)
 	{
-		int start = (int)std::round(position - m_KernelSize / 2);
-		int end = (int)std::round(position + m_KernelSize / 2);
+		int start = (int)std::round(position - m_KernelSize / 2.0);
+		int end = (int)std::round(position + m_KernelSize / 2.0);
 		float result(0.0);
+		float angle = (float)sin(M_PI * (start - position));
 		for (int j = start; j < end; j++)
 		{
-			float x = (float)(M_PI * (j - position));
-			float blackman_window = (0.42f + 0.5f * cos(2.0f * x / m_KernelSize) + 0.08f * cos(4.0f * x / m_KernelSize));
+			float x = (float)(j - position);
+			float window = (*m_Window)(x, m_KernelSize);
+			x *= M_PI;
 			float zero = x == 0;
 			float low_sinc = sin((float)m_CutoffFraction * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction;
-			float high_sinc = sin(x) / (x + zero) * (1.0f - zero) + zero;
+			float high_sinc = angle / (x + zero) * (1.0f - zero) + zero;
 			float sinc = high_sinc - low_sinc;
-			result += view[(size_t)j] * sinc * blackman_window;
+			result += view[(size_t)j] * sinc * window;
 		}
 		m_Result[channel][i] = result;
 		position += 1.0;
@@ -123,13 +142,14 @@ SampleView BandPassFST::Transform(Track& track, size_t offset, size_t count, uns
 		float result(0.0);
 		for (int j = start; j < end; j++)
 		{
-			float x = (float)(M_PI * (j - position));
-			float blackman_window = (0.42f + 0.5f * cos(2.0f * x / m_KernelSize) + 0.08f * cos(4.0f * x / m_KernelSize));
+			float x = (float)(j - position);
+			float window = (*m_Window)(x, m_KernelSize);
+			x *= M_PI;
 			float zero = x == 0;
 			float low_sinc = sin((float)m_CutoffLow * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffLow;
 			float high_sinc = sin((float)m_CutoffHigh * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffHigh;
 			float sinc = high_sinc - low_sinc;
-			result += view[(size_t)j] * sinc * blackman_window;
+			result += view[(size_t)j] * sinc * window;
 		}
 		m_Result[channel][i] = result;
 		position += 1.0;

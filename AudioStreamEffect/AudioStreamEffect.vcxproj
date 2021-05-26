@@ -166,6 +166,7 @@
     <ClCompile Include="src\Track.cpp" />
     <ClCompile Include="src\WaveIn.cpp" />
     <ClCompile Include="src\Window.cpp" />
+    <ClCompile Include="src\WindowFunction.cpp" />
     <ClCompile Include="vendor\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="vendor\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="src\Track.h" />
     <ClInclude Include="src\WaveIn.h" />
     <ClInclude Include="src\Window.h" />
+    <ClInclude Include="src\WindowFunction.h" />
     <ClInclude Include="vendor\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="vendor\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
