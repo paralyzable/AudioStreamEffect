@@ -7,7 +7,7 @@ Effects include
     Change speed - windowed sinc interpolation  
     Low pass filter  
     High pass filter  
-    Band pass filter
+    Band pass filter  
 Selectable window functions for all kernel filters.  
     Rectangle  
     Triangle  
