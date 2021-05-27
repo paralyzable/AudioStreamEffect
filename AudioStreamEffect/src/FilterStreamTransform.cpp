@@ -4,8 +4,13 @@
 #include <math.h>
 #include <cmath>
 
+FilterStreamTransform::FilterStreamTransform()
+{
+	RegenerateCache();
+}
+
 FilterStreamTransform::FilterStreamTransform(const FilterStreamTransform& other)
-	:m_Window(CreateWindowFromID(other.m_Window->ID()))
+	:m_KernelSize(other.m_KernelSize), m_Window(CreateWindowFromID(other.m_Window->ID())), m_WindowCache(other.m_WindowCache)
 {
 }
 
@@ -21,48 +26,62 @@ std::string FilterStreamTransform::IGetTransformName() const
 
 void FilterStreamTransform::ITransformDraw()
 {
+	bool kernel_update(false);
 	float size = m_KernelSize;
-	if (ImGui::SliderFloat("Kernel size", &size, 1, 2001, "%.0f", 2.0f))
+	if (ImGui::SliderFloat("Kernel size", &size, 1, 20001, "%.0f", ImGuiSliderFlags_Logarithmic))
+	{
 		m_KernelSize = (int)std::round(size);
+		kernel_update = true;
+	}
 	m_KernelSize += m_KernelSize % 2 == 0;
 
 	int current = m_Window->ID();
+	bool window_update(false);
 	if (ImGui::Combo("Window", &current, windows_list, std::size(windows_list)))
 	{
+		window_update = true;
 		m_Window = CreateWindowFromID(current);
-		if (current == 5)//DolpCheby is expensive
-			m_KernelSize = 15;
 	}
 	m_Window->Draw();
+	if (kernel_update || window_update)
+		RegenerateCache();
 
-	IFilterDraw();
+	IFilterDraw(kernel_update);
+} 
+
+void FilterStreamTransform::RegenerateCache()
+{
+	m_WindowCache.resize(m_KernelSize);
+	int L = ((int)m_KernelSize - 1) / 2;
+	for (int x = -L; x <= L; x++)
+	{
+		m_WindowCache[x + L] = (*m_Window)(x, m_KernelSize);
+	}
+}
+
+LowPassFST::LowPassFST()
+{
+	RegenerateCache();
 }
 
 LowPassFST::LowPassFST(const FilterStreamTransform& base)
 	:FilterStreamTransform(base)
 {
+	RegenerateCache();
 }
 
 SampleView LowPassFST::Transform(Track& track, size_t offset, size_t count, unsigned int channel)
 {
 	SampleView view = track.GetSampleView(0, track.GetSampleCount(), channel);
-	double position = track.GetPosition();
+	uint64_t position = (uint64_t)std::round(track.GetPosition());
 
 	m_Result[channel].resize(count);
 	for (size_t i = 0; i < count; i++)
 	{
-		int start = (int)std::round(position - m_KernelSize / 2.0);
-		int end = (int)std::round(position + m_KernelSize / 2.0);
+		int L = ((int)m_KernelSize - 1) / 2;
 		float result(0.0);
-		for (int j = start; j < end; j++)
-		{
-			float x = (float)(j - position);
-			float window = (*m_Window)(x, m_KernelSize);
-			x *= M_PI;
-			float zero = x == 0;
-			float sinc = sin((float)m_CutoffFraction * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction;
-			result += view[(size_t)j] * sinc * window;
-		}
+		for (int n = 0; n < m_KernelSize; n++)
+			result += view[(size_t)(position + n - L)] * m_SincCache[n] * m_WindowCache[n];
 		m_Result[channel][i] = result;
 		position += 1.0;
 	}
@@ -70,44 +89,53 @@ SampleView LowPassFST::Transform(Track& track, size_t offset, size_t count, unsi
 	return { m_Result[channel].data(), count };
 }
 
-void LowPassFST::IFilterDraw()
+void LowPassFST::IFilterDraw(bool kernel_update)
 {
-	double min = 0.0, max = 1.0;
-	ImGui::SliderScalar("Cut-off fraction", ImGuiDataType_Double, &m_CutoffFraction, &min, &max);
-
 	float frequency = (float)m_CutoffFraction * 22050.0f;
-	if (ImGui::SliderFloat("Cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", 2.0f))
+	if (ImGui::SliderFloat("Cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f",ImGuiSliderFlags_Logarithmic))
+	{
 		m_CutoffFraction = frequency / 22050.0;
+		kernel_update = true;
+	}
+
+	if (kernel_update)
+		RegenerateCache();
+}
+
+void LowPassFST::RegenerateCache()
+{
+	m_SincCache.resize(m_KernelSize);
+	int L = ((int)m_KernelSize - 1) / 2;
+	for (int x = -L; x <= L; x++)
+	{
+		float zero = x == 0;
+		m_SincCache[x + L] = sin(M_PI * (float)m_CutoffFraction * x) / (M_PI * x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction;
+	}
+}
+
+HighPassFST::HighPassFST()
+{
+	RegenerateCache();
 }
 
 HighPassFST::HighPassFST(const FilterStreamTransform& base)
 	:FilterStreamTransform(base)
 {
+	RegenerateCache();
 }
 
 SampleView HighPassFST::Transform(Track& track, size_t offset, size_t count, unsigned int channel)
 {
 	SampleView view = track.GetSampleView(0, track.GetSampleCount(), channel);
-	double position = track.GetPosition();
+	uint64_t position = (uint64_t)std::round(track.GetPosition());
 
 	m_Result[channel].resize(count);
 	for (size_t i = 0; i < count; i++)
 	{
-		int start = (int)std::round(position - m_KernelSize / 2.0);
-		int end = (int)std::round(position + m_KernelSize / 2.0);
+		int L = ((int)m_KernelSize - 1) / 2;
 		float result(0.0);
-		float angle = (float)sin(M_PI * (start - position));
-		for (int j = start; j < end; j++)
-		{
-			float x = (float)(j - position);
-			float window = (*m_Window)(x, m_KernelSize);
-			x *= M_PI;
-			float zero = x == 0;
-			float low_sinc = sin((float)m_CutoffFraction * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction;
-			float high_sinc = angle / (x + zero) * (1.0f - zero) + zero;
-			float sinc = high_sinc - low_sinc;
-			result += view[(size_t)j] * sinc * window;
-		}
+		for (int n = 0; n < m_KernelSize; n++)
+			result += view[(size_t)(position + n - L)] * m_SincCache[n] * m_WindowCache[n];
 		m_Result[channel][i] = result;
 		position += 1.0;
 	}
@@ -115,42 +143,53 @@ SampleView HighPassFST::Transform(Track& track, size_t offset, size_t count, uns
 	return { m_Result[channel].data(), count };
 }
 
-void HighPassFST::IFilterDraw()
+void HighPassFST::IFilterDraw(bool kernel_update)
 {
-	double min = 0.0, max = 1.0;
-	ImGui::SliderScalar("Cut-off fraction", ImGuiDataType_Double, &m_CutoffFraction, &min, &max);
 	float frequency = (float)m_CutoffFraction * 22050.0f;
-	if (ImGui::SliderFloat("Cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", 2.0f))
+	if (ImGui::SliderFloat("Cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
+	{
 		m_CutoffFraction = frequency / 22050.0;
+		kernel_update = true;
+	}
+
+	if (kernel_update)
+		RegenerateCache();
+}
+
+void HighPassFST::RegenerateCache()
+{
+	m_SincCache.resize(m_KernelSize);
+	int L = ((int)m_KernelSize - 1) / 2;
+	for (int x = -L; x <= L; x++)
+	{
+		float zero = x == 0;
+		m_SincCache[x + L] = zero-(sin(M_PI * (float)m_CutoffFraction * x) / (M_PI * x + zero) * (1.0f - zero) + zero * (float)m_CutoffFraction);
+	}
+}
+
+BandPassFST::BandPassFST()
+{
+	RegenerateCache();
 }
 
 BandPassFST::BandPassFST(const FilterStreamTransform& base)
 	:FilterStreamTransform(base)
 {
+	RegenerateCache();
 }
 
 SampleView BandPassFST::Transform(Track& track, size_t offset, size_t count, unsigned int channel)
 {
 	SampleView view = track.GetSampleView(0, track.GetSampleCount(), channel);
-	double position = track.GetPosition();
+	uint64_t position = (uint64_t)std::round(track.GetPosition());
 
 	m_Result[channel].resize(count);
 	for (size_t i = 0; i < count; i++)
 	{
-		int start = (int)std::round(position - m_KernelSize / 2);
-		int end = (int)std::round(position + m_KernelSize / 2);
+		int L = ((int)m_KernelSize - 1) / 2;
 		float result(0.0);
-		for (int j = start; j < end; j++)
-		{
-			float x = (float)(j - position);
-			float window = (*m_Window)(x, m_KernelSize);
-			x *= M_PI;
-			float zero = x == 0;
-			float low_sinc = sin((float)m_CutoffLow * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffLow;
-			float high_sinc = sin((float)m_CutoffHigh * x) / (x + zero) * (1.0f - zero) + zero * (float)m_CutoffHigh;
-			float sinc = high_sinc - low_sinc;
-			result += view[(size_t)j] * sinc * window;
-		}
+		for (int n = 0; n < m_KernelSize; n++)
+			result += view[(size_t)(position + n - L)] * m_SincCache[n] * m_WindowCache[n];
 		m_Result[channel][i] = result;
 		position += 1.0;
 	}
@@ -158,16 +197,34 @@ SampleView BandPassFST::Transform(Track& track, size_t offset, size_t count, uns
 	return { m_Result[channel].data(), count };
 }
 
-void BandPassFST::IFilterDraw()
+void BandPassFST::IFilterDraw(bool kernel_update)
 {
-	double min = 0.0, max = 1.0;
-	ImGui::SliderScalar("Low cut-off fraction", ImGuiDataType_Double, &m_CutoffLow, &min, &max);
-	ImGui::SliderScalar("High cut-off fraction", ImGuiDataType_Double, &m_CutoffHigh, &min, &max);
-
 	float frequency = (float)m_CutoffLow * 22050.0f;
-	if (ImGui::SliderFloat("Low cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", 2.0f))
+	if (ImGui::SliderFloat("Low cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
+	{
 		m_CutoffLow = frequency / 22050.0;
+		kernel_update = true;
+	}
 	frequency = (float)m_CutoffHigh * 22050.0f;
-	if (ImGui::SliderFloat("High cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", 2.0f))
+	if (ImGui::SliderFloat("High cut-off frequency(log)", &frequency, 20.0f, 22050.0f, "%.3f", ImGuiSliderFlags_Logarithmic))
+	{
 		m_CutoffHigh = frequency / 22050.0;
+		kernel_update = true;
+	}
+
+	if (kernel_update)
+		RegenerateCache();
+}
+
+void BandPassFST::RegenerateCache()
+{
+	m_SincCache.resize(m_KernelSize);
+	int L = ((int)m_KernelSize - 1) / 2;
+	for (int x = -L; x <= L; x++)
+	{
+		float zero = x == 0;
+		float low = sin(M_PI * (float)m_CutoffLow * x) / (M_PI * x + zero) * (1.0f - zero) + zero * (float)m_CutoffLow;
+		float high = sin(M_PI * (float)m_CutoffHigh * x) / (M_PI * x + zero) * (1.0f - zero) + zero * (float)m_CutoffHigh;
+		m_SincCache[x + L] = high - low;
+	}
 }

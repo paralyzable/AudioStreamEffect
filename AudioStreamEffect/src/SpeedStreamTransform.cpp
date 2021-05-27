@@ -131,7 +131,7 @@ SampleView WindowedSincSST::Transform(Track& track, size_t offset, size_t count,
 void WindowedSincSST::ISpeedDraw()
 {
 	float size = m_KernelSize;
-	if (ImGui::SliderFloat("Kernel size", &size, 1, 10001,"%.0f", 2.0f))
+	if (ImGui::SliderFloat("Kernel size", &size, 1, 10001,"%.0f", ImGuiSliderFlags_Logarithmic))
 		m_KernelSize = (int)std::round(size);
 	m_KernelSize += m_KernelSize % 2 == 0;
 
