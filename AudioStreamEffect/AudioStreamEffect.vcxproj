@@ -124,6 +124,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\glbinding\include;$(SolutionDir)Dependencies\glfw\include;$(SolutionDir)Dependencies\portaudio\include;$(ProjectDir)vendor;$(ProjectDir)vendor\imgui;$(ProjectDir)vendor\imgui\backends;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,6 +147,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <Optimization>MaxSpeed</Optimization>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -160,9 +162,15 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\AudioDevice.cpp" />
-    <ClCompile Include="src\FilterStreamTransform.cpp" />
-    <ClCompile Include="src\SpeedStreamTransform.cpp" />
-    <ClCompile Include="src\StreamTransform.cpp" />
+    <ClCompile Include="src\stream_transform\filter\FilterBase.cpp" />
+    <ClCompile Include="src\stream_transform\filter\frequency_domain\FrequencyDomainBase.cpp" />
+    <ClCompile Include="src\stream_transform\filter\frequency_domain\Filters.cpp" />
+    <ClCompile Include="src\stream_transform\filter\time_domain\Filters.cpp" />
+    <ClCompile Include="src\stream_transform\filter\time_domain\TimeDomainBase.cpp" />
+    <ClCompile Include="src\stream_transform\pitch\PitchBase.cpp" />
+    <ClCompile Include="src\stream_transform\speed\SpeedBase.cpp" />
+    <ClCompile Include="src\stream_transform\speed\SpeedTransforms.cpp" />
+    <ClCompile Include="src\stream_transform\StreamTransformBase.cpp" />
     <ClCompile Include="src\Track.cpp" />
     <ClCompile Include="src\WaveIn.cpp" />
     <ClCompile Include="src\Window.cpp" />
@@ -177,9 +185,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AudioDevice.h" />
-    <ClInclude Include="src\FilterStreamTransform.h" />
-    <ClInclude Include="src\SpeedStreamTransform.h" />
-    <ClInclude Include="src\StreamTransform.h" />
+    <ClInclude Include="src\FastFourierTransform.h" />
+    <ClInclude Include="src\stream_transform\filter\FilterBase.h" />
+    <ClInclude Include="src\stream_transform\filter\frequency_domain\Filters.h" />
+    <ClInclude Include="src\stream_transform\filter\frequency_domain\FrequencyDomainBase.h" />
+    <ClInclude Include="src\stream_transform\filter\time_domain\Filters.h" />
+    <ClInclude Include="src\stream_transform\filter\time_domain\TimeDomainBase.h" />
+    <ClInclude Include="src\stream_transform\pitch\PitchBase.h" />
+    <ClInclude Include="src\stream_transform\pitch\PitchTransforms.h" />
+    <ClInclude Include="src\stream_transform\speed\SpeedBase.h" />
+    <ClInclude Include="src\stream_transform\speed\SpeedTransforms.h" />
+    <ClInclude Include="src\stream_transform\StreamTransformBase.h" />
     <ClInclude Include="src\Track.h" />
     <ClInclude Include="src\WaveIn.h" />
     <ClInclude Include="src\Window.h" />
@@ -193,10 +209,6 @@
     <ClInclude Include="vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="vendor\imgui\imstb_truetype.h" />
     <ClInclude Include="vendor\tinyfiledialogs\tinyfiledialogs.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="resources\1.wav" />
-    <Media Include="resources\sine.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -12,7 +12,7 @@ class WindowFunction
 {
 public:
 	virtual float operator()(float x, float window_size) const = 0;
-	virtual void Draw();
+	virtual bool Draw();
 	virtual int ID() const = 0;
 };
 
@@ -57,6 +57,6 @@ private:
 	float m_Attenuation = 120;
 public:
 	float operator()(float x, float window_size) const override;
-	void Draw() override;
+	bool Draw() override;
 	int ID() const { return 5; }
 };

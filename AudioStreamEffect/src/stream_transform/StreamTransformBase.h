@@ -12,6 +12,8 @@ protected:
 public:
 	StreamTransform() = default;
 	virtual ~StreamTransform() = default;
+	
+	StreamTransform(StreamTransform&& other) noexcept = default;
 
 	virtual SampleView Transform(Track& track, size_t offset, size_t count, unsigned int channel) = 0;
 	virtual void EndTransform(Track& track, size_t offset, size_t count) = 0;

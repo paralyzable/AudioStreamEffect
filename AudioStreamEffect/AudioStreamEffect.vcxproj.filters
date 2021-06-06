@@ -51,16 +51,34 @@
     <ClCompile Include="vendor\tinyfiledialogs\tinyfiledialogs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\StreamTransform.cpp">
+    <ClCompile Include="src\stream_transform\StreamTransformBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\SpeedStreamTransform.cpp">
+    <ClCompile Include="src\stream_transform\speed\SpeedBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\FilterStreamTransform.cpp">
+    <ClCompile Include="src\stream_transform\filter\FilterBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\WindowFunction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\pitch\PitchBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\filter\time_domain\TimeDomainBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\filter\time_domain\Filters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\filter\frequency_domain\FrequencyDomainBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\filter\frequency_domain\Filters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream_transform\speed\SpeedTransforms.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -104,25 +122,41 @@
     <ClInclude Include="vendor\tinyfiledialogs\tinyfiledialogs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\StreamTransform.h">
+    <ClInclude Include="src\stream_transform\StreamTransformBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\SpeedStreamTransform.h">
+    <ClInclude Include="src\stream_transform\speed\SpeedBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\FilterStreamTransform.h">
+    <ClInclude Include="src\stream_transform\filter\FilterBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\WindowFunction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Media Include="resources\1.wav">
-      <Filter>Resource Files</Filter>
-    </Media>
-    <Media Include="resources\sine.wav">
-      <Filter>Resource Files</Filter>
-    </Media>
+    <ClInclude Include="src\FastFourierTransform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\pitch\PitchBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\filter\time_domain\TimeDomainBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\filter\time_domain\Filters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\filter\frequency_domain\FrequencyDomainBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\filter\frequency_domain\Filters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\speed\SpeedTransforms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stream_transform\pitch\PitchTransforms.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

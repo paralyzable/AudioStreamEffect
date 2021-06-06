@@ -14,68 +14,32 @@ struct SampleView
 class Track
 {
 private:
+	std::vector<std::vector<float>> m_AudioData;
+
+	unsigned int m_SampleRate = 0;
+	size_t m_SampleCount = 0;
+	std::string m_Name = "";
+
 	double m_Position = 0;
 	bool m_Playing = false;
 	bool m_Repeat = false;
-	double m_Volume = 1.0;
+	double m_Gain = 0.0;
 	float m_TimePosition = 0;
 
-protected:
-	unsigned int m_SampleRate = 0;
-	double m_Length = 0;
-	std::string m_Name;
 public:
-	Track(unsigned int sample_rate, size_t sample_length, std::string name);
-	virtual ~Track() = 0;
+	Track() = default;
+	Track(std::string path);
 
 	unsigned int GetSampleRate() const;
-	virtual size_t GetSampleCount() const = 0;
-	virtual unsigned int GetChannelCount() const = 0;
-	virtual SampleView GetSampleView(size_t offset, size_t size, unsigned int channel) = 0;
-	virtual std::unique_ptr<Track> Clone() const = 0;
-	virtual std::unique_ptr<Track> CloneType() const = 0;
-	virtual void Resize(size_t size) = 0;
+	size_t GetSampleCount() const;
+	unsigned int GetChannelCount() const;
+	SampleView GetSampleView(size_t offset, size_t size, unsigned int channel);
 	double GetPosition() const;
 	void AdvancePosition(double delta);
 	void ResetPosition();
 	bool Playing() const;
-	double Volume() const;
+	double Gain() const;
+	bool IsValid() const;
 
 	bool Draw();
-
-};
-
-std::unique_ptr<Track> OpenTrack(std::string path);
-
-class MonoTrack :public Track
-{
-private:
-	std::vector<float> m_AudioData;
-
-public:
-	MonoTrack(std::vector<float>&& audio_data, unsigned int sample_rate, std::string name);
-
-	size_t GetSampleCount() const;
-	unsigned int GetChannelCount() const;
-	SampleView GetSampleView(size_t offset, size_t size, unsigned int channel);
-	std::unique_ptr<Track> Clone() const;
-	std::unique_ptr<Track> CloneType() const;
-	void Resize(size_t size);
-};
-
-class StereoTrack :public Track
-{
-private:
-	std::vector<float> m_AudioLeft;
-	std::vector<float> m_AudioRight;
-
-public:
-	StereoTrack(std::vector<float>&& audio_left, std::vector<float>&& audio_right, unsigned int sample_rate, std::string name);
-
-	size_t GetSampleCount() const;
-	unsigned int GetChannelCount() const;
-	SampleView GetSampleView(size_t offset, size_t size, unsigned int channel);
-	std::unique_ptr<Track> Clone() const;
-	std::unique_ptr<Track> CloneType() const;
-	void Resize(size_t size);
 };

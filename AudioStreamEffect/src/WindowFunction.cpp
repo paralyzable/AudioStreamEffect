@@ -24,8 +24,9 @@ std::unique_ptr<WindowFunction> CreateWindowFromID(int id)
     }
 }
 
-void WindowFunction::Draw()
+bool WindowFunction::Draw()
 {
+    return false;
 }
 
 float RectangleWindow::operator()(float x, float window_size) const
@@ -80,7 +81,7 @@ float DolphChebyshevWindow::operator()(float x, float window_size) const
     return (tg + 2 * sum) / (tg * 3.0);
 }
 
-void DolphChebyshevWindow::Draw()
+bool DolphChebyshevWindow::Draw()
 {
-    ImGui::SliderFloat("Attenuation(db)", &m_Attenuation, 0.0f, 180.0f);
+    return ImGui::SliderFloat("Attenuation(db)", &m_Attenuation, 0.0f, 180.0f);
 }
